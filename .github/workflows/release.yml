@@ -1,0 +1,44 @@
+name: Generar y Publicar Release APK
+
+on:
+  push:
+    tags:
+      - 'V*' # Se activa al subir un tag como V4.0.1
+
+jobs:
+  build:
+    name: Compilar y Publicar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Dar permisos de ejecución a gradlew
+        run: chmod +x gradlew
+
+      - name: Compilar APK de Lanzamiento (Release)
+        run: ./gradlew assembleRelease
+
+      - name: Crear Release en GitHub y Subir APK
+        uses: softprops/action-gh-release@v1
+        with:
+          # Ruta al APK generado. Nota: Si cambias el nombre del módulo 'app', ajusta la ruta.
+          files: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: Versión ${{ github.ref_name }}
+          body: |
+            Nueva actualización automática disponible.
+            Código de versión: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "700360194624",
+    "project_id": "montaje-tamer",
+    "storage_bucket": "montaje-tamer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700360194624:android:38aaa906d06ff2fd57fda5",
+        "android_client_info": {
+          "package_name": "com.example.montaje_tamer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700360194624-07d7qtchgq081pp3n1bl0nr29kn46p5r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.montaje_tamer",
+            "certificate_hash": "ab3745fd9f83a5fd157be439e38653c2c52b89d7"
+          }
+        },
+        {
+          "client_id": "700360194624-4m3kmpms4rgc7bm0pdhqvuor3ikld4uf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBURffX6nz63kzrVm_5fUOCZqSjQM3MCLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700360194624-4m3kmpms4rgc7bm0pdhqvuor3ikld4uf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
