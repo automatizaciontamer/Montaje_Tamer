@@ -284,8 +284,12 @@ class FirestoreRepository {
             transaction.update(ref, "confirmaciones", nuevasConfirmaciones)
             transaction.update(ref, "motivosRechazoAsignacion", nuevosMotivos)
             
-            // Si todos aceptaron, cambiar estado a EN_PROCESO
-            val todosAceptaron = nuevasConfirmaciones.values.all { it == "ACEPTADO" }
+            // Si todos los que están en la lista han aceptado, cambiar estado a EN_PROCESO
+            // Ignoramos a los que hayan rechazado si queremos que avance, 
+            // pero aquí la lógica es que TODOS los actuales deben haber dado una respuesta positiva.
+            val valores = nuevasConfirmaciones.values
+            val todosAceptaron = valores.isNotEmpty() && valores.all { it == "ACEPTADO" }
+
             if (todosAceptaron && montaje.estado == "PENDIENTE_CONFIRMACION") {
                 transaction.update(ref, "estado", "EN_PROCESO")
             }

@@ -31,8 +31,8 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     companion object {
-        const val APP_VERSION = "V4.0.2"
-        const val VERSION_CODE = 2
+        const val APP_VERSION = "V4.0.3"
+        const val VERSION_CODE = 3
     }
 
     private val viewModel: MainViewModel by viewModels()
