@@ -306,6 +306,14 @@ class FirestoreRepository {
             }
     }
 
+    suspend fun getConfiguracion(): ConfiguracionEmpresa? {
+        return try {
+            db.collection("configuracion").document("config").get().await().toObject(ConfiguracionEmpresa::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun saveConfiguracion(config: ConfiguracionEmpresa) {
         db.collection("configuracion").document("config").set(config).await()
     }
