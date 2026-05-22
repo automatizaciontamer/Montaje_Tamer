@@ -115,6 +115,16 @@ class FirestoreRepository {
         ref.set(gasto.copy(id = ref.id)).await()
     }
 
+    suspend fun updateGasto(gasto: Gasto) {
+        if (gasto.id.isNotEmpty()) {
+            db.collection("gastos").document(gasto.id).set(gasto).await()
+        }
+    }
+
+    suspend fun deleteGasto(id: String) {
+        db.collection("gastos").document(id).delete().await()
+    }
+
     suspend fun getGastosPorMontaje(montajeId: String): List<Gasto> {
         return db.collection("gastos")
             .whereEqualTo("lugarMontajeId", montajeId)

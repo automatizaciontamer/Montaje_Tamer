@@ -1,5 +1,6 @@
 package com.example.montaje_tamer.ui.screens
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,6 +44,8 @@ fun GastoScreen(viewModel: MainViewModel) {
 
     var selectedMontaje by remember { mutableStateOf<Montaje?>(null) }
     var showAddGastoDialog by remember { mutableStateOf(false) }
+    var showEditGastoDialog by remember { mutableStateOf<Gasto?>(null) }
+    var showDeleteConfirmation by remember { mutableStateOf<Gasto?>(null) }
     var showSolicitarEfectivoDialog by remember { mutableStateOf(false) }
     var showFinishedPicker by remember { mutableStateOf(false) }
 
@@ -174,13 +177,27 @@ fun GastoScreen(viewModel: MainViewModel) {
                     if (gastos.isEmpty()) {
                         item { Text("No hay gastos registrados", style = MaterialTheme.typography.bodySmall) }
                     } else {
-                        items(gastos) { gasto ->
+                        val gastosOrdenados = gastos.sortedByDescending { it.fecha }
+                        items(gastosOrdenados) { gasto ->
                             Card(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(gasto.detalle, style = MaterialTheme.typography.titleMedium)
-                                    Text("Monto: $${String.format("%.2f", gasto.totalGasto)} (${gasto.tipoPago})")
-                                    Text("Fecha: ${sdf.format(gasto.fecha.toDate())}", style = MaterialTheme.typography.bodySmall)
-                                    Text("Comprobante: ${gasto.numeroComprobante}", style = MaterialTheme.typography.bodySmall)
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(gasto.detalle, style = MaterialTheme.typography.titleMedium)
+                                        Text("Monto: $${String.format("%.2f", gasto.totalGasto)} (${gasto.tipoPago})")
+                                        Text("Fecha: ${sdf.format(gasto.fecha.toDate())}", style = MaterialTheme.typography.bodySmall)
+                                        Text("Comprobante: ${gasto.numeroComprobante}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    if (selectedMontaje?.estado != "FINALIZADO") {
+                                        IconButton(onClick = { showEditGastoDialog = gasto }) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
+                                        }
+                                        IconButton(onClick = { showDeleteConfirmation = gasto }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -227,6 +244,40 @@ fun GastoScreen(viewModel: MainViewModel) {
                 onConfirm = { nuevoGasto ->
                     viewModel.addGasto(context, nuevoGasto.copy(personalEncargadoId = currentUser?.id ?: ""))
                     showAddGastoDialog = false
+                }
+            )
+        }
+
+        if (showEditGastoDialog != null && selectedMontaje != null) {
+            AddGastoDialog(
+                montaje = selectedMontaje!!,
+                gastoAEditar = showEditGastoDialog,
+                onDismiss = { showEditGastoDialog = null },
+                onConfirm = { gastoEditado ->
+                    viewModel.updateGasto(context, gastoEditado)
+                    showEditGastoDialog = null
+                }
+            )
+        }
+
+        if (showDeleteConfirmation != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmation = null },
+                title = { Text("Eliminar Gasto") },
+                text = { Text("¿Estás seguro de que deseas eliminar este gasto? El saldo de la caja se actualizará automáticamente.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteGasto(context, showDeleteConfirmation!!)
+                            showDeleteConfirmation = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Eliminar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmation = null }) { Text("Cancelar") }
                 }
             )
         }
@@ -290,17 +341,47 @@ fun SolicitarEfectivoDialog(montaje: Montaje, onDismiss: () -> Unit, onConfirm: 
 }
 
 @Composable
-fun AddGastoDialog(montaje: Montaje, onDismiss: () -> Unit, onConfirm: (Gasto) -> Unit) {
-    var detalle by remember { mutableStateOf("") }
-    var monto by remember { mutableStateOf("") }
-    var comprobante by remember { mutableStateOf("") }
-    var tipoPago by remember { mutableStateOf("EFECTIVO") }
+fun AddGastoDialog(
+    montaje: Montaje,
+    gastoAEditar: Gasto? = null,
+    onDismiss: () -> Unit,
+    onConfirm: (Gasto) -> Unit
+) {
+    var detalle by remember { mutableStateOf(gastoAEditar?.detalle ?: "") }
+    var monto by remember { mutableStateOf(gastoAEditar?.totalGasto?.toString() ?: "") }
+    var comprobante by remember { mutableStateOf(gastoAEditar?.numeroComprobante ?: "") }
+    var tipoPago by remember { mutableStateOf(gastoAEditar?.tipoPago ?: "EFECTIVO") }
+    var fechaSeleccionada by remember { mutableStateOf(gastoAEditar?.fecha ?: Timestamp.now()) }
+    
+    val context = LocalContext.current
+    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val calendar = Calendar.getInstance()
+            calendar.set(year, month, dayOfMonth)
+            fechaSeleccionada = Timestamp(calendar.time)
+        },
+        Calendar.getInstance().apply { time = fechaSeleccionada.toDate() }.get(Calendar.YEAR),
+        Calendar.getInstance().apply { time = fechaSeleccionada.toDate() }.get(Calendar.MONTH),
+        Calendar.getInstance().apply { time = fechaSeleccionada.toDate() }.get(Calendar.DAY_OF_MONTH)
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nuevo Gasto en ${montaje.nombre}") },
+        title = { Text(if (gastoAEditar == null) "Nuevo Gasto en ${montaje.nombre}" else "Editar Gasto") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { datePickerDialog.show() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Fecha: ${sdf.format(fechaSeleccionada.toDate())}")
+                }
+
                 TextField(value = detalle, onValueChange = { detalle = it }, label = { Text("Detalle del gasto") }, modifier = Modifier.fillMaxWidth())
                 TextField(
                     value = monto, 
@@ -323,15 +404,24 @@ fun AddGastoDialog(montaje: Montaje, onDismiss: () -> Unit, onConfirm: (Gasto) -
         },
         confirmButton = {
             Button(onClick = {
-                onConfirm(Gasto(
+                val gasto = gastoAEditar?.copy(
+                    detalle = detalle,
+                    totalGasto = monto.toDoubleOrNull() ?: 0.0,
+                    numeroComprobante = comprobante,
+                    tipoPago = tipoPago,
+                    fecha = fechaSeleccionada
+                ) ?: Gasto(
                     lugarMontajeId = montaje.id,
                     detalle = detalle,
                     totalGasto = monto.toDoubleOrNull() ?: 0.0,
                     numeroComprobante = comprobante,
                     tipoPago = tipoPago,
-                    fecha = Timestamp.now()
-                ))
-            }, enabled = detalle.isNotBlank() && monto.isNotBlank()) { Text("Registrar") }
+                    fecha = fechaSeleccionada
+                )
+                onConfirm(gasto)
+            }, enabled = detalle.isNotBlank() && monto.isNotBlank()) { 
+                Text(if (gastoAEditar == null) "Registrar" else "Guardar Cambios") 
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancelar") }

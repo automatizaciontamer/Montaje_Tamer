@@ -495,6 +495,28 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun updateGasto(context: Context, gasto: Gasto) {
+        viewModelScope.launch {
+            try {
+                repository.updateGasto(gasto)
+                loadGastosPorMontaje(gasto.lugarMontajeId)
+            } catch (e: Exception) {
+                FileLogger.logError(context, "Error al actualizar gasto", e)
+            }
+        }
+    }
+
+    fun deleteGasto(context: Context, gasto: Gasto) {
+        viewModelScope.launch {
+            try {
+                repository.deleteGasto(gasto.id)
+                loadGastosPorMontaje(gasto.lugarMontajeId)
+            } catch (e: Exception) {
+                FileLogger.logError(context, "Error al eliminar gasto", e)
+            }
+        }
+    }
+
     fun loadGastosPorMontaje(montajeId: String) {
         viewModelScope.launch {
             _gastos.value = repository.getGastosPorMontaje(montajeId)
