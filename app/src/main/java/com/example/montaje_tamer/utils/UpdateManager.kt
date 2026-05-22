@@ -14,7 +14,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 object UpdateManager {
-    private const val GITHUB_API_URL = "https://api.github.com/repos/automatizaciontamer/Montaje-Tamer/releases/latest"
+    private const val GITHUB_API_URL = "https://api.github.com/repos/Fabricio285/Montaje_Tamer/releases/latest"
     private val client = OkHttpClient()
 
     suspend fun checkForUpdates(context: Context, currentVersion: String, onUpdateAvailable: (String, String) -> Unit) {

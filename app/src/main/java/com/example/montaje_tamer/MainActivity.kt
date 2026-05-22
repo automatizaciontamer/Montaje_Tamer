@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val APP_VERSION = "V4.0.1"
         const val VERSION_CODE = 2
+        "git tag V4.0.1"
+        "git push origin V4.0.1"
     }
 
     private val viewModel: MainViewModel by viewModels()
